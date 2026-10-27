@@ -6,6 +6,11 @@ namespace AgentEngine\Exception;
 
 final class InvalidArgument extends AgentEngineException
 {
+    public static function directoryNotFound(string $path): self
+    {
+        return new self(sprintf('Directory "%s" does not exist.', $path));
+    }
+
     public static function emptyIdentifier(string $name): self
     {
         return new self(sprintf('%s cannot be empty.', $name));

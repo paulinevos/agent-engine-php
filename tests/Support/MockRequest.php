@@ -15,6 +15,7 @@ final readonly class MockRequest
         public string $query,
         public array $headers,
         public string $body,
+        public int $bodySize = 0,
     ) {
     }
 
@@ -31,6 +32,7 @@ final readonly class MockRequest
             query: (string) ($data['query'] ?? ''),
             headers: is_array($headers) ? array_map('strval', $headers) : [],
             body: (string) ($data['body'] ?? ''),
+            bodySize: (int) ($data['body_size'] ?? 0),
         );
     }
 

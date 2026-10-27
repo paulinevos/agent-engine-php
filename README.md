@@ -1,6 +1,6 @@
 # Agent Engine PHP
 
-Framework-agnostic PHP client for the [MongoDB Atlas Agent Engine](https://www.mongodb.com/docs/agentengine/) API.
+Framework-agnostic PHP client and CLI for the [MongoDB Atlas Agent Engine](https://www.mongodb.com/docs/agentengine/) API.
 
 Agent Engine is in [public preview](https://www.mongodb.com/docs/preview-features/) and its API can change without a migration path. This client pins the published `2026-09-20-preview` [contract](https://www.mongodb.com/docs/agentengine/reference/limitations/#std-label-agent-engine-api-contract-pinning) by default.
 
@@ -137,7 +137,30 @@ $client->executions->interrupt($workspace, $result->executionId, stepNumber: 12)
 | `$client->traces` | `forSession` | [Inspect traces](https://www.mongodb.com/docs/agentengine/manage/inspect-traces/) |
 | `$client->memory` | `recordTurn`, `buildContext`, `search` | [Agent memory](https://www.mongodb.com/docs/agentengine/add-features/memory-types/) |
 | `$client->workspaces` | `list`, `get` | [Projects and workspaces](https://www.mongodb.com/docs/agentengine/manage/project-org-workspace/) |
+| `$client->builds` | `archiveInit`, `start`, `get` | [Build the agent image](https://www.mongodb.com/docs/agentengine/deploy/agent-image/) |
+| `$client->deployments` | `create`, `current` | [Deploy your build](https://www.mongodb.com/docs/agentengine/deploy/deploy-build/) |
+| `$client->deployer` | `deploy` | [CI/CD pipeline](https://www.mongodb.com/docs/agentengine/deploy/ci-cd/) |
 | `$client->health` | `status` | [API reference](https://www.mongodb.com/docs/api/doc/agentengine) |
+
+## CLI
+
+The package installs `vendor/bin/agent-engine` with `deploy` and `invoke`.
+
+```bash
+export AGENT_ENGINE_PROJECT_ID='...'
+export AGENT_ENGINE_WORKSPACE_ID='...'
+export AGENT_ENGINE_CLIENT_ID='...'
+export AGENT_ENGINE_CLIENT_SECRET='...'
+
+vendor/bin/agent-engine deploy ./agent --label=release-42
+vendor/bin/agent-engine invoke "Hello, agent!" --stream
+```
+
+`deploy` archives the directory, uploads it to the presigned URL, starts the build, waits for it, creates the deployment, and waits for health. It excludes `.git`, `.venv`, `.env`, `node_modules`, `vendor`, and similar by default; add more with `--exclude`.
+
+`invoke` sends a message and prints the response; `--stream` prints text deltas as they arrive. Both accept `--json` for CI.
+
+See [docs/cli.md](docs/cli.md) for all options and exit codes. The deploy flow targets archive-source workspaces; a GitHub-connected workspace rejects `archive-init` with `409 UNSUPPORTED_SOURCE_TYPE`.
 
 ### Custom headers
 
@@ -200,17 +223,20 @@ Every exception extends `AgentEngine\Exception\AgentEngineException`. Error sema
 | `OAuthFailure` | Token endpoint rejected the credentials |
 | `TransportFailure` | Connection or read failure |
 | `StreamFailed` | The stream delivered an `error` chunk while collecting text |
+| `DeployFailed` | Build or deployment failed, or the wait timed out |
+| `ArchiveFailed` | Missing `agent.yaml`, unreadable file, or an overlong path |
+| `UploadFailed` | The presigned archive upload failed |
 | `InvalidArgument` | Invalid base URL, identifier, header, or option |
 
 `ApiFailure::$details` carries the status, message, error code, reason, body, and `Retry-After`.
 
 ## Framework integration
 
-The core has no framework dependencies. See [docs/integrations.md](docs/integrations.md) for the adapter seams in [Symfony AI](https://symfony.com/doc/current/ai/index.html), [Laravel AI](https://laravel.com/docs/12.x/ai), and [Prism](https://prismphp.com/).
+The SDK core uses PSR-18/17 and has no framework coupling; the bundled CLI uses Symfony Console. See [docs/integrations.md](docs/integrations.md) for the adapter seams in [Symfony AI](https://symfony.com/doc/current/ai/index.html), [Laravel AI](https://laravel.com/docs/12.x/ai), and [Prism](https://prismphp.com/).
 
 ## Scope
 
-This covers the Agent Engine runtime surface: invocation, streaming, executions, human-in-the-loop, sessions, traces, memory, workspaces, and health. Builds, deployments, secrets, service accounts, and organization management are not wrapped yet; their shapes are in the [API reference](https://www.mongodb.com/docs/api/doc/agentengine) and the [OpenAPI document](https://www.mongodb.com/docs/api/doc/agentengine.json). The authenticated sender is exposed for those:
+This covers the runtime surface plus the archive-source deploy flow: invocation, streaming, executions, human-in-the-loop, sessions, traces, memory, workspaces, builds, deployments, the deployer, and health. Secrets, service accounts, organization management, promotions, rollbacks, and GitHub-connected builds are not wrapped yet; their shapes are in the [API reference](https://www.mongodb.com/docs/api/doc/agentengine) and the [OpenAPI document](https://www.mongodb.com/docs/api/doc/agentengine.json). The authenticated sender is exposed for those:
 
 ```php
 use AgentEngine\Http\ApiRequest;

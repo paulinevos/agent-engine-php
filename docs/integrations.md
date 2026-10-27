@@ -169,3 +169,9 @@ Extend [`Prism\Prism\Providers\Provider`](https://prismphp.com/) and implement `
 Wrap the client in whatever interface the library exposes; the three operations above are the whole mapping. Keep the wrapper thin, and pass `InvocationOptions` through so callers can set a session, [custom headers](https://www.mongodb.com/docs/agentengine/deploy/invoke-agent/#std-label-agent-engine-forward-custom-headers), or the invoke timeout.
 
 For framework-side plumbing, the usual complements are [Symfony Messenger](https://symfony.com/doc/current/messenger.html) or [Laravel queues](https://laravel.com/docs/queues) for long runs, [Symfony's `StreamedResponse`](https://symfony.com/doc/current/components/http_foundation.html#streaming-a-response) or [Laravel streamed responses](https://laravel.com/docs/responses#streamed-responses) for SSE delivery, and the framework's own authorization for review screens.
+
+## Wrapping the CLI
+
+`AgentEngine\Cli\DeployCommand` and `AgentEngine\Cli\InvokeCommand` are Symfony Console commands. A Symfony bundle can register them as services and add configuration-backed defaults. A Laravel package can either call them through `Artisan::call()` or expose thin Artisan commands that delegate to `AgentDeployer` and `Invocations`.
+
+Keep the wrapper to option mapping and output. The deploy sequence, polling, and error handling live in `AgentDeployer`; the framework package should not reimplement them.

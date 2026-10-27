@@ -9,10 +9,15 @@ use AgentEngine\Auth\StaticTokenProvider;
 use AgentEngine\Auth\TokenProvider;
 use AgentEngine\Clock\Clock;
 use AgentEngine\Clock\SystemClock;
+use AgentEngine\Deployment\AgentArchive;
+use AgentEngine\Deployment\AgentDeployer;
 use AgentEngine\Http\ApiRequestSender;
+use AgentEngine\Http\PresignedUploader;
 use AgentEngine\Http\StreamTransport;
 use AgentEngine\Http\Transport;
 use AgentEngine\Http\UserAgent;
+use AgentEngine\Resource\Builds;
+use AgentEngine\Resource\Deployments;
 use AgentEngine\Resource\Executions;
 use AgentEngine\Resource\Health;
 use AgentEngine\Resource\Invocations;
@@ -44,6 +49,9 @@ final readonly class AgentEngineClient
         public Traces $traces,
         public Memory $memory,
         public Workspaces $workspaces,
+        public Builds $builds,
+        public Deployments $deployments,
+        public AgentDeployer $deployer,
         public Health $health,
     ) {
     }
@@ -120,6 +128,9 @@ final readonly class AgentEngineClient
             streamFactory: $factory,
         );
 
+        $builds = new Builds($projectId, $sender);
+        $deployments = new Deployments($projectId, $sender);
+
         return new self(
             $sender,
             new Invocations($projectId, $sender),
@@ -128,6 +139,14 @@ final readonly class AgentEngineClient
             new Traces($projectId, $sender),
             new Memory($projectId, $sender),
             new Workspaces($projectId, $sender),
+            $builds,
+            $deployments,
+            new AgentDeployer(
+                $builds,
+                $deployments,
+                new PresignedUploader($transport, $factory, $factory),
+                new AgentArchive(),
+            ),
             new Health($baseUrl, $transport, $factory),
         );
     }

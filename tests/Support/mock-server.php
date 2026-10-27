@@ -23,6 +23,10 @@ if ($path === '/api/v1/oauth/token') {
     respond_token($method, $headers);
 }
 
+if ($method === 'PUT' && str_starts_with($path, '/upload/')) {
+    respond_json(200, ['uploaded' => true]);
+}
+
 if (!str_starts_with($path, '/api/v1/')) {
     respond_json(404, ['error' => 'not_found']);
 }
@@ -40,6 +44,7 @@ handle_sessions($method, $path);
 handle_traces($path);
 handle_memory($method, $path);
 handle_workspaces($method, $path);
+handle_builds_and_deployments($method, $path);
 
 respond_json(404, ['error' => 'not_found', 'path' => $path]);
 
@@ -291,6 +296,53 @@ function handle_traces(string $path): void
     ]);
 }
 
+function handle_builds_and_deployments(string $method, string $path): void
+{
+    if ($method === 'POST' && preg_match('#^/api/v1/projects/[^/]+/workspaces/[^/]+/builds/archive-init$#', $path) === 1) {
+        $host = $_SERVER['HTTP_HOST'] ?? '127.0.0.1';
+
+        respond_json(201, [
+            'build_id' => 'bld_1',
+            'upload_url' => 'http://' . $host . '/upload/bld_1',
+            'upload_expires_at' => '2026-10-27T20:10:00Z',
+            'source_type' => 'archive',
+        ]);
+    }
+
+    if ($method === 'POST' && preg_match('#/builds/([^/]+)/start$#', $path, $matches) === 1) {
+        respond_json(202, ['build_id' => $matches[1], 'status' => 'accepted']);
+    }
+
+    if ($method === 'GET' && preg_match('#/builds/([^/]+)$#', $path, $matches) === 1) {
+        respond_json(200, [
+            'build_id' => $matches[1],
+            'status' => 'succeeded',
+            'executor_type' => 'vm',
+            'image_uri' => 'registry.example/agent:1',
+            'lockfile_mode' => 're-resolved',
+            'error_message' => null,
+        ]);
+    }
+
+    if ($method === 'POST' && preg_match('#/deployments$#', $path) === 1) {
+        respond_json(202, ['deployment_id' => 'deploy-1']);
+    }
+
+    if ($method === 'GET' && preg_match('#/deployments/current$#', $path) === 1) {
+        respond_json(200, [
+            'deployment_id' => 'deploy-1',
+            'status' => 'successful',
+            'components' => [[
+                'name' => 'agent',
+                'available' => true,
+                'replicas' => 1,
+                'ready_replicas' => 1,
+            ]],
+            'health' => ['available' => true, 'checked_at' => '2026-10-27T20:00:00Z'],
+        ]);
+    }
+}
+
 function handle_workspaces(string $method, string $path): void
 {
     if ($method !== 'GET') {
@@ -468,11 +520,20 @@ function record_request(string $method, string $path, string $query, array $head
         return;
     }
 
-    file_put_contents($log, json_encode([
+    $record = [
         'method' => $method,
         'path' => $path,
         'query' => $query,
         'headers' => $headers,
-        'body' => $body,
-    ]) . "\n", FILE_APPEND);
+        'body' => '',
+        'body_size' => strlen($body),
+    ];
+
+    if ($body !== '' && preg_match('//u', $body) !== 1) {
+        $record['body_base64'] = base64_encode($body);
+    } else {
+        $record['body'] = $body;
+    }
+
+    file_put_contents($log, json_encode($record) . "\n", FILE_APPEND);
 }
