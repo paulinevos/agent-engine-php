@@ -1,5 +1,5 @@
 {
-    "name": "paulinevos/agent-engine",
+    "name": "vos/agent-engine",
     "description": "Framework-agnostic PHP client for the MongoDB Atlas Agent Engine API",
     "type": "library",
     "license": "MIT",

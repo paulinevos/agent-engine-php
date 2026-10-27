@@ -7,7 +7,7 @@ Agent Engine is in [public preview](https://www.mongodb.com/docs/preview-feature
 ## Install
 
 ```bash
-composer require paulinevos/agent-engine
+composer require vos/agent-engine
 ```
 
 Requires [PHP 8.2](https://www.php.net/releases/8.2/en.php) or later and a [service account](https://www.mongodb.com/docs/agentengine/api-keys-service-accounts/) with `PROJECT_OWNER`.
