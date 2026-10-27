@@ -10,114 +10,34 @@ Sessions and [forwarded headers](https://www.mongodb.com/docs/agentengine/deploy
 
 ## Symfony AI
 
-Packages: [`symfony/ai-platform`](https://symfony.com/doc/current/ai/index.html) (bridge packages are published as `symfony/ai-<provider>-platform`; the source lives in the [Symfony AI monorepo](https://github.com/symfony/ai)). The platform API is experimental and changed repeatedly during 2026; pin the beta you build against.
+A ready-made bundle lives in [`packages/symfony-ai`](../packages/symfony-ai). It registers an `ai.platform` provider, an autowirable `AgentEngineClient`, and a `MemoryProviderInterface` backed by Agent Engine memory. It targets `symfony/ai-*` v1.0.0-BETA1.
 
-The extension points are `ModelClientInterface` and `ResultConverterInterface`. A model name selects the workspace, for example `agent-engine:support-agent`.
-
-```php
-use AgentEngine\AgentEngineClient;
-use AgentEngine\Invocation\InvocationStream;
-use AgentEngine\Invocation\InvokeRequest;
-use AgentEngine\Invocation\InvokeResult;
-use AgentEngine\Value\WorkspaceId;
-use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\ModelClientInterface;
-use Symfony\AI\Platform\RawResultInterface;
-
-final readonly class AgentEngineModelClient implements ModelClientInterface
-{
-    public function __construct(
-        private AgentEngineClient $client,
-        private WorkspaceId $workspace,
-    ) {
-    }
-
-    public function supports(Model $model): bool
-    {
-        return str_starts_with($model->getName(), 'agent-engine:');
-    }
-
-    public function request(Model $model, array|string $payload, array $options = []): RawResultInterface
-    {
-        $message = is_string($payload)
-            ? $payload
-            : json_encode($payload, JSON_THROW_ON_ERROR);
-
-        $request = InvokeRequest::message($message);
-
-        return ($options['stream'] ?? false) === true
-            ? new AgentEngineRawResult($this->client->invocations->stream($this->workspace, $request))
-            : new AgentEngineRawResult($this->client->invocations->invoke($this->workspace, $request));
-    }
-}
+```yaml
+agent_engine:
+    project_id: '%env(AGENT_ENGINE_PROJECT_ID)%'
+    auth:
+        client_id: '%env(AGENT_ENGINE_CLIENT_ID)%'
+        client_secret: '%env(AGENT_ENGINE_CLIENT_SECRET)%'
+    platform:
+        models:
+            support-agent: '%env(AGENT_ENGINE_WORKSPACE_ID)%'
+    memory:
+        user_id: 'demo-user'
 ```
 
-```php
-use AgentEngine\Invocation\InvocationStream;
-use AgentEngine\Invocation\InvokeResult;
-use Symfony\AI\Platform\RawResultInterface;
-
-final readonly class AgentEngineRawResult implements RawResultInterface
-{
-    public function __construct(private InvokeResult|InvocationStream $result)
-    {
-    }
-
-    public function getData(): array
-    {
-        return $this->result instanceof InvokeResult
-            ? ['response' => $this->result->text()]
-            : [];
-    }
-
-    public function getDataStream(): iterable
-    {
-        return $this->result instanceof InvocationStream
-            ? $this->result->textDeltas()
-            : [];
-    }
-
-    public function getObject(): object
-    {
-        return $this->result;
-    }
-}
+```yaml
+ai:
+    agent:
+        support:
+            platform: agent_engine.platform
+            model: support-agent
+            memory:
+                service: agent_engine.memory_provider
 ```
 
-```php
-use AgentEngine\Invocation\InvocationStream;
-use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\RawResultInterface;
-use Symfony\AI\Platform\Result\ResultInterface;
-use Symfony\AI\Platform\Result\StreamResult;
-use Symfony\AI\Platform\Result\TextResult;
-use Symfony\AI\Platform\ResultConverterInterface;
-use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
+Register `AgentEngineBundle` before `AiBundle` in `config/bundles.php` so the provider's `ai.platform` tag is visible when `AiBundle` builds its aliases.
 
-final readonly class AgentEngineResultConverter implements ResultConverterInterface
-{
-    public function supports(Model $model): bool
-    {
-        return str_starts_with($model->getName(), 'agent-engine:');
-    }
-
-    public function convert(RawResultInterface $result, array $options = []): ResultInterface
-    {
-        $raw = $result->getObject();
-
-        return $raw instanceof InvocationStream
-            ? new StreamResult($result->getDataStream())
-            : new TextResult($raw->text());
-    }
-
-    public function getTokenUsageExtractor(): ?TokenUsageExtractorInterface
-    {
-        return null;
-    }
-}
-```
-
-Register the two services and pass them to a [`Symfony\AI\Platform\Provider`](https://symfony.com/doc/current/ai/index.html). The bundle's exact custom-provider registration differs between beta releases; define the services yourself and reference the provider service from `ai.agent.<name>.platform`.
+Building the bridge by hand instead means implementing `ModelClientInterface`, `ResultConverterInterface`, and `ModelCatalogInterface`, then registering them in a `Symfony\AI\Platform\Provider` tagged `ai.platform`. The platform API is experimental and changed repeatedly during 2026; pin the beta you build against.
 
 ## Laravel AI
 
@@ -170,8 +90,10 @@ Wrap the client in whatever interface the library exposes; the three operations 
 
 For framework-side plumbing, the usual complements are [Symfony Messenger](https://symfony.com/doc/current/messenger.html) or [Laravel queues](https://laravel.com/docs/queues) for long runs, [Symfony's `StreamedResponse`](https://symfony.com/doc/current/components/http_foundation.html#streaming-a-response) or [Laravel streamed responses](https://laravel.com/docs/responses#streamed-responses) for SSE delivery, and the framework's own authorization for review screens.
 
-## Wrapping the CLI
+## Symfony AI bundle
 
-`AgentEngine\Cli\DeployCommand` and `AgentEngine\Cli\InvokeCommand` are Symfony Console commands. A Symfony bundle can register them as services and add configuration-backed defaults. A Laravel package can either call them through `Artisan::call()` or expose thin Artisan commands that delegate to `AgentDeployer` and `Invocations`.
+The [`packages/symfony-ai`](../packages/symfony-ai/README.md) sub-package (`vos/agent-engine-symfony-ai`) wires the client into Symfony AI and provides the `agent-engine:deploy` and `agent-engine:invoke` console commands. Start with its README for installation and configuration.
 
-Keep the wrapper to option mapping and output. The deploy sequence, polling, and error handling live in `AgentDeployer`; the framework package should not reimplement them.
+## Laravel
+
+A Laravel package can expose Artisan commands that delegate to `AgentDeployer` and `Invocations`. Keep the wrapper to option mapping and output. The deploy sequence, polling, and error handling live in `AgentDeployer`; the package should not reimplement them.

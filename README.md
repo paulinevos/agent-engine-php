@@ -146,6 +146,8 @@ $client->executions->interrupt($workspace, $result->executionId, stepNumber: 12)
 
 The package installs `vendor/bin/agent-engine` with `deploy` and `invoke`.
 
+For Symfony applications, the [Symfony AI bundle](packages/symfony-ai/README.md) provides `agent-engine:deploy` and `agent-engine:invoke` with configuration and autowiring.
+
 ```bash
 export AGENT_ENGINE_PROJECT_ID='...'
 export AGENT_ENGINE_WORKSPACE_ID='...'
@@ -232,7 +234,7 @@ Every exception extends `AgentEngine\Exception\AgentEngineException`. Error sema
 
 ## Framework integration
 
-The SDK core uses PSR-18/17 and has no framework coupling; the bundled CLI uses Symfony Console. See [docs/integrations.md](docs/integrations.md) for the adapter seams in [Symfony AI](https://symfony.com/doc/current/ai/index.html), [Laravel AI](https://laravel.com/docs/12.x/ai), and [Prism](https://prismphp.com/).
+The SDK core uses PSR-18/17 and has no framework coupling; the bundled CLI uses Symfony Console. See [docs/integrations.md](docs/integrations.md) for the adapter seams in [Symfony AI](https://symfony.com/doc/current/ai/index.html), [Laravel AI](https://laravel.com/docs/12.x/ai), and [Prism](https://prismphp.com/). A ready-made Symfony AI bundle lives in [`packages/symfony-ai`](packages/symfony-ai), including `agent-engine:deploy` and `agent-engine:invoke`; see its [README](packages/symfony-ai/README.md).
 
 ## Scope
 

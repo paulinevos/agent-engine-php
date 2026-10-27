@@ -54,6 +54,19 @@ final class ApiRequestSenderTest extends TestCase
     }
 
     #[Test]
+    public function it_normalises_response_header_names(): void
+    {
+        $transport = new FakeTransport(new Response(200, ['X-Session-ID' => 'session-1'], '{}'));
+
+        $response = $this->sender($transport)->send(new ApiRequest(
+            method: HttpMethod::Post,
+            path: '/api/v1/projects/p1/workspaces/w1/invoke',
+        ));
+
+        self::assertSame('session-1', $response->header('X-Session-ID'));
+    }
+
+    #[Test]
     public function it_maps_an_api_error_response(): void
     {
         $transport = new FakeTransport(new Response(429, ['Retry-After' => '3'], '{"error":"slow down"}'));

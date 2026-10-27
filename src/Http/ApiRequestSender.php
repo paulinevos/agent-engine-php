@@ -69,7 +69,7 @@ final readonly class ApiRequestSender
      */
     private function normaliseHeaders(array $headers): array
     {
-        return array_map('array_values', $headers);
+        return array_change_key_case(array_map('array_values', $headers), CASE_LOWER);
     }
 
     private function psrRequest(ApiRequest $request, string $accept): RequestInterface

@@ -1,0 +1,46 @@
+{
+    "name": "vos/agent-engine-symfony-ai",
+    "description": "Symfony AI bundle for the MongoDB Atlas Agent Engine PHP client",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.2",
+        "symfony/ai-agent": "^1.0@beta",
+        "symfony/ai-bundle": "^1.0@beta",
+        "symfony/ai-platform": "^1.0@beta",
+        "symfony/config": "^7.3|^8.0",
+        "symfony/console": "^7.3|^8.0",
+        "symfony/dependency-injection": "^7.3|^8.0",
+        "symfony/http-kernel": "^7.3|^8.0",
+        "vos/agent-engine": "dev-main"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^11.5"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../.."
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "AgentEngine\\SymfonyAi\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "AgentEngine\\SymfonyAi\\Tests\\": "tests/"
+        }
+    },
+    "minimum-stability": "beta",
+    "prefer-stable": true,
+    "config": {
+        "sort-packages": true
+    },
+    "scripts": {
+        "test": "phpunit",
+        "stan": "phpstan analyse"
+    }
+}

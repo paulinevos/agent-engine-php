@@ -2,6 +2,8 @@
 
 The package installs `vendor/bin/agent-engine` with two commands: `deploy` and `invoke`.
 
+For Symfony applications, use the [Symfony AI bundle](../packages/symfony-ai/README.md). It provides `agent-engine:deploy` and `agent-engine:invoke` with configuration and autowiring.
+
 ## Credentials
 
 | Variable | Purpose |
