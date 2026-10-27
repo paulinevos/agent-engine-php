@@ -155,6 +155,8 @@ final class BundleConfigurationTest extends TestCase
     {
         $container = new ContainerBuilder();
         $container->setParameter('kernel.environment', 'test');
+        $container->setParameter('kernel.build_dir', sys_get_temp_dir());
+        $container->setParameter('kernel.project_dir', dirname(__DIR__, 2));
         $bundle = new AgentEngineBundle();
         $bundle->build($container);
 
