@@ -1,0 +1,9 @@
+parameters:
+    level: 8
+    paths:
+        - src
+        - tests
+    tmpDir: var/phpstan
+    excludePaths:
+        analyse:
+            - tests/Support/mock-server.php

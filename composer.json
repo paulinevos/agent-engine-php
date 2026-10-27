@@ -1,0 +1,35 @@
+{
+    "name": "paulinevos/agent-engine",
+    "description": "Framework-agnostic PHP client for the MongoDB Atlas Agent Engine API",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.2",
+        "nyholm/psr7": "^1.8",
+        "psr/http-client": "^1.0",
+        "psr/http-factory": "^1.1",
+        "psr/http-message": "^2.0",
+        "psr/simple-cache": "^3.0"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^11.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "AgentEngine\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "AgentEngine\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "scripts": {
+        "test": "phpunit",
+        "stan": "phpstan analyse"
+    }
+}
