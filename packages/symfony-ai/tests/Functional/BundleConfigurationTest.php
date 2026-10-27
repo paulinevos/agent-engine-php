@@ -154,6 +154,7 @@ final class BundleConfigurationTest extends TestCase
     private function load(array $config): ContainerBuilder
     {
         $container = new ContainerBuilder();
+        $container->setParameter('kernel.environment', 'test');
         $bundle = new AgentEngineBundle();
         $bundle->build($container);
 
