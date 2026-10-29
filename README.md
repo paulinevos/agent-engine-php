@@ -1,5 +1,8 @@
 # Agent Engine PHP
 
+> [!WARNING]
+> This project is **very, very beta** and is **not intended for production use yet**. Its API, behaviour, and packaging may change without notice or a migration path, and features may be incomplete or broken. Try it, break it, [open an issue](https://github.com/paulinevos/agent-engine-php/issues) — but don't run it in production.
+
 Framework-agnostic PHP client and CLI for the [MongoDB Atlas Agent Engine](https://www.mongodb.com/docs/agentengine/) API.
 
 Agent Engine is in [public preview](https://www.mongodb.com/docs/preview-features/) and its API can change without a migration path. This client pins the published `2026-09-20-preview` [contract](https://www.mongodb.com/docs/agentengine/reference/limitations/#std-label-agent-engine-api-contract-pinning) by default.
